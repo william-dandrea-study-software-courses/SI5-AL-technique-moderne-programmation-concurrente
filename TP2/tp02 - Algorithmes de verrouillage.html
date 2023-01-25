@@ -1,0 +1,155 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html;
+      charset=windows-1252">
+    <title>TP 2 - Algorithmes de verrouillage</title>
+    <link
+href="https://fonts.googleapis.com/css?family=Raleway:400,500,600,700,800,900"
+      rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css"
+      href="../../prog_concurrente.css">
+  </head>
+  <body>
+    <h1>TP 2 - Algorithmes de verrouillage et algorithmique non
+      bloquante.<br>
+    </h1>
+    <p>Le code proposé devra peut être être adapté à la configuration de
+      votre station. Il sera très difficile, voir impossible à réaliser
+      sur une station Apple ou Windows (nombreuses bibliothèques
+      incomplètement implémentées). <b>Je vous conseille donc
+        d'utiliser une station Linux ou une machine virtuelle (boole
+par exemple). </b></p>
+    <p><font color="red">Ce TD est plus difficile que le pr&eacute;c&eacute;dent, il en
+sera tenu compte lors de l'&eacute;valuation : r&eacute;daction moins
+travaill&eacute;e ou TD pas fini</font></p>
+    <h2 id="exercice1">Exercice : une pile à verrous</h2>
+    <p> Le r&eacute;pertoir tp2 contient les
+      fichiers source de cette séance. Si vous utilisez votre propre
+      machine, modifiez <span class="src">USE_CPUS</span> et <span
+        class="src">CACHE_LINE_SIZE</span> dans <span class="src">definitions.h</span>.
+      Le fichier <span class="src">stack_mutex.c</span> implémente un
+      programme dont les threads manipulent une pile protégée avec des
+      mutexes POSIX. Chaque thread effecture de très nombreuses
+      opérations <span class="src">push()</span> et <span class="src">pop()</span>.
+      Lisez le code et assurez-vous que vous le comprenez. </p>
+    <div class="important_question">
+      <h4> <span class="question_title"><b>Partie 1. Mutex versus
+            Spinlock<br>
+          </b></span></h4>
+      <span class="question_title"><b>Question 1.</b> </span> Lancez le
+      code avec quatre threads sur quatre coeurs en utilisant la
+      commande <tt><span class="src">bench.sh</span></tt><tt>
+        stack_mutex.c</tt>. Quelles performances obtenez-vous ?<br>
+      <br>
+    </div>
+    <div class="important_question"> <span class="question_title"><b>Question
+
+
+
+
+          2.</b> </span> Copiez le fichier <span class="src">stack_mutex.c</span>
+      vers <span class="src">stack_spinlock.c</span>. Dans ce fichier,
+      remplacez le mutex POSIX par un spinlock basique que vous
+      implémenterez vous-même. Pour implémenter le spinlock, il faut
+      utiliser un "<a
+        href="https://gcc.gnu.org/onlinedocs/gcc-4.4.5/gcc/Atomic-Builtins.html">compare_and_swap</a>".
+      Celui-ci est <a
+        href="https://gcc.gnu.org/onlinedocs/gcc-4.4.5/gcc/Atomic-Builtins.html">disponible</a>
+      sous la forme de builtin dans gcc. Ne faites surtout pas de
+      sleep() ou usleep() pendant l'attente active, utilisez "rien" ou "<a
+        href="https://software.intel.com/en-us/node/524249"><tt>_mm_pause()</tt></a>"<br>
+      Avec quatre threads sur quatre coeurs, quelles performances
+      obtenez-vous ?<br>
+      <br>
+    </div>
+    <div class="important_question"> <span class="question_title"><b>Question
+
+
+
+
+          3.</b> </span> Essayez maintenant avec mille threads sur un
+      seul coeur et comparer avec les performances des deux solutions :
+      mutex POSIX et spinlock.<br>
+      <br>
+      Pouvez-vous expliquer les performances que vous observez? </div>
+    <p> </p>
+    <h4> <span class="question_title"><b>Partie 2. verrouillage CLH<br>
+        </b></span></h4>
+      <span class="question_title"></span>
+      <p><br>Vous pouvez aussi regarder cette <a href="http://concurrencyfreaks.blogspot.com/2014/05/exchg-mutex-alternative-to-mcs-lock.html">page</a>
+      <p>L'algorithme de verrouillage CLH est décrit ci-dessous :<br>
+      <img src="tp02/clh.png" alt="Algorithme de verrouillage CLH"
+        width="800" height="420"><br>
+    </p>
+    <div class="important_question"> <span class="question_title"><b>Question
+
+
+
+
+          4.</b> </span> Créez maintenant <span class="src">stack_clh.c</span>,
+      dans lequel vous implémenterez l'algorithme CLH. Quelles
+      performances obtenez vous pour quatre threads sur quatre coeurs ?<br>
+      Pour mettre en oeuvre le "fetch and store", vous pouvez utiliser
+      le builtin gcc : <a
+        href="https://gcc.gnu.org/onlinedocs/gcc-4.4.5/gcc/Atomic-Builtins.html">__sync_lock_test_and_set</a><br>
+    </div>
+    <div class="important_question"> <span class="question_title"><b>Question
+
+
+
+
+          5.</b> </span> Comparez les algorithmes MCS et CLH. En quoi
+      sont-ils similaires ? Quelle est la différence principale entre
+      les deux algorithmes ? </div>
+
+     
+    <div class="important_question">
+      <h4><span class="question_title"><b>Partie 2. verrouillage par
+            ticket Ticket<br>
+          </b></span></h4>
+      <p> Jetez maintenant un oeil à <a
+          href="https://en.wikipedia.org/wiki/Ticket_lock">la page
+          wikipedia du Ticket Lock.</a> A votre avis, cet algorithme
+        est-il plus rapide ou plus lent que CLH ? </p>
+      <span class="question_title"><b>Question 6.</b> </span> Créez
+      finalement <span class="src">stack_ticket.c</span>, qui utilisera
+      votre implémentation du Ticket Lock. Les performances sont
+      elles-meilleures, pires, ou similaires à&nbsp; celles de CLH ? </div>
+    <div class="important_question"> <span class="question_title"><b>Question
+
+
+
+
+          7.</b> </span> Essayez de remplacer <span class="src">_mm_pause()</span>
+      par <span class="src">sched_yield()</span> dans chacune des
+      boucles à attente active de vos verrous. Lorsque vous lancez vos
+      algorithmes avec 1000 threads sur un coeur, quelle différence
+      observez-vous en termes de performances ? </div>
+    <h2 id="exercice1">Partie 3.</h2>
+    <p> Pour aller plus vite que CLH ou le Ticket Lock, il va falloir
+      utiliser un algorithme dans lequel un thread exécute, en plus de
+      sa section critique, de nombreuses autres sections critiques en
+      attente provenant d'autres threads. Chaque chacune de sections
+      critiques est exécutée sans aucune synchronisation, ce qui est
+      très efficace... <em> Attention cependant, avec un tel
+        algorithme, on n'a plus de fonctions <span class="src">lock()</span>
+        et <span class="src">unlock()</span> : si on ne peut pas
+        acquérir le verrou directement, il faut stocker un pointeur vers
+        une fonction qui encapsule la section critique quelque part, et
+        de la même manière, il faut stocker un objet de contexte qui
+        contiendra les arguments et la valeur de retour de la fonction !</em>
+    </p>
+    <p> Jetez un oeil à <a href="tp02/p257-fatourou.pdf">l'article
+        suivant</a>, et implémentez l'algorithme 1 de la page 4 repris
+      ci-dessous. Quelles performances obtenez-vous ? Pour améliorer
+      encore les performances, vous pouvez essayer de faire en sorte que
+      le combinateur évite les paires de <span class="src">push()</span>
+      et de <span class="src">pop()</span> qui s'annulent, comme décrit
+      dans l'article...<br>
+    </p>
+    <img src="tp02/CC-Synch.png" alt="" width="561" height="952">
+    <div id="footer"> <b>D'après un sujet proposé par Jean-Pierre Lozi.</b></div>
+  </body>
+</html>
